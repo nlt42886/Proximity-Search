@@ -15,6 +15,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Courier+Prime&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
   :root {
     --black:      #0a0a0a;
@@ -308,6 +309,20 @@
   .file-status { font-size: 0.68rem; color: var(--text-dim); flex-shrink: 0; }
   .file-remove { background: none; border: none; cursor: pointer; color: var(--text-dim); font-size: 1rem; padding: 0 2px; transition: color 0.15s; }
   .file-remove:hover { color: #e55; }
+  .file-note-btn { background: none; border: none; cursor: pointer; color: var(--text-dim); font-size: 0.8rem; padding: 0 2px; transition: color 0.15s; }
+  .file-note-btn:hover { color: var(--amber); }
+  .file-note-input {
+    width: 100%; margin-top: 4px;
+    padding: 4px 8px;
+    background: var(--dark3);
+    border: 1px solid var(--amber);
+    border-radius: 3px;
+    font-size: 0.72rem;
+    color: var(--text);
+    font-family: 'EB Garamond', serif;
+  }
+  .file-note-input:focus { outline: none; }
+  .file-note-label { font-size: 0.68rem; color: var(--amber); font-style: italic; margin-top: 2px; }
   .loading-bar {
     height: 2px; border-radius: 1px;
     background: linear-gradient(90deg, var(--orange), var(--amber), var(--gold));
@@ -625,6 +640,23 @@
   }
   .expand-btn:hover { color: var(--amber); }
 
+  .ctx-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    font-family: 'Cinzel', serif;
+    font-size: 0.6rem;
+    letter-spacing: 0.05em;
+    padding: 3px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .ctx-btn:hover { border-color: var(--amber); color: var(--amber); background: rgba(224,123,0,0.08); }
+  .ctx-btn.expanded { border-color: var(--gold); color: var(--gold-light); background: rgba(212,160,23,0.1); }
+
   .copy-btn {
     margin-left: 6px;
     background: transparent;
@@ -664,6 +696,119 @@
     text-align: center; padding: 60px 20px;
     font-family: 'Cinzel', serif; color: var(--text-dim); font-size: 0.85rem; letter-spacing: 0.06em;
   }
+
+  /* ── HISTORY DROPDOWN ── */
+  .history-wrap { position: relative; }
+  .history-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    min-width: 260px;
+    background: var(--dark2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.5);
+    z-index: 500;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+  .history-dropdown.open { display: block; }
+  .history-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+  }
+  .history-item:last-child { border-bottom: none; }
+  .history-item:hover { background: rgba(224,123,0,0.1); }
+  .history-terms {
+    font-family: 'Cinzel', serif;
+    font-size: 0.7rem;
+    color: var(--gold-light);
+    letter-spacing: 0.05em;
+    margin-bottom: 2px;
+  }
+  .history-meta {
+    font-size: 0.66rem;
+    color: var(--text-dim);
+  }
+  .history-empty {
+    padding: 14px 12px;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    text-align: center;
+    font-style: italic;
+  }
+
+  /* ── AI SEARCH PANEL ── */
+  .ai-panel {
+    background: var(--dark2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+  }
+  .ai-query-row {
+    display: flex;
+    gap: 6px;
+  }
+  .ai-query-input {
+    flex: 1;
+    padding: 7px 10px;
+    background: var(--dark3);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-family: 'EB Garamond', serif;
+    font-size: 0.88rem;
+    color: var(--text);
+    transition: border-color 0.2s;
+  }
+  .ai-query-input:focus { outline: none; border-color: var(--amber); box-shadow: 0 0 6px rgba(224,123,0,0.2); }
+  .ai-query-input::placeholder { color: var(--text-dim); font-style: italic; }
+  .ai-ask-btn {
+    padding: 7px 12px;
+    background: linear-gradient(135deg, #1a0e00, #2a1800);
+    border: 1px solid var(--amber);
+    color: var(--gold-light);
+    font-family: 'Cinzel', serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    border-radius: 4px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+  .ai-ask-btn:hover { box-shadow: 0 0 12px rgba(224,123,0,0.3); }
+  .ai-ask-btn:disabled { opacity: 0.4; cursor: default; }
+  .ai-key-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .ai-key-input {
+    flex: 1;
+    padding: 5px 9px;
+    background: var(--dark3);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    transition: border-color 0.2s;
+  }
+  .ai-key-input:focus { outline: none; border-color: var(--amber); }
+  .ai-key-input::placeholder { color: var(--text-dim); opacity: 0.6; }
+  .ai-status {
+    font-size: 0.74rem;
+    color: var(--text-dim);
+    font-style: italic;
+    min-height: 1.1em;
+  }
+  .ai-status.ok { color: #4a9e6a; font-style: normal; }
+  .ai-status.err { color: #c04040; font-style: normal; }
 
   /* ── ABOUT / SHARE SECTION ── */
   .about-section {
@@ -1119,6 +1264,10 @@
       <button class="icon-btn" id="btnLight" onclick="toggleLight()" title="Toggle light/dark mode">☀ Light</button>
       <button class="icon-btn" id="btnSizeDown" onclick="resizeText(-1)" title="Decrease text size">A−</button>
       <button class="icon-btn" id="btnSizeUp" onclick="resizeText(1)" title="Increase text size">A+</button>
+      <div class="history-wrap">
+        <button class="icon-btn" id="btnHistory" onclick="toggleHistoryDropdown()" title="Recent searches">⏱ History</button>
+        <div class="history-dropdown" id="historyDropdown"></div>
+      </div>
     </div>
 
     <div>
@@ -1129,10 +1278,10 @@
     <div>
       <div class="section-label">Or Load Files</div>
       <div class="drop-zone" id="dropZone">
-        <input type="file" id="fileInput" multiple accept=".txt,.pdf,.docx,.doc,.md" onchange="handleFiles(this.files)">
+        <input type="file" id="fileInput" multiple accept=".txt,.pdf,.docx,.doc,.md,.epub,.rtf,.html,.htm" onchange="handleFiles(this.files)">
         <div class="drop-icon">📜</div>
         <div class="drop-text">Click to browse or drag &amp; drop</div>
-        <div class="drop-types">PDF · Word (.docx) · TXT · Markdown</div>
+        <div class="drop-types">PDF · Word · EPUB · RTF · HTML · TXT · Markdown</div>
       </div>
       <div class="file-list" id="fileList"></div>
       <div class="source-filter" id="sourceFilter" style="display:none">
@@ -1176,6 +1325,23 @@
         </div>
         <div class="bible-ref-chips" id="bibleRefChips"></div>
         <div class="bible-ref-hint">Abbreviations, Roman numerals, ranges &amp; multi-ref (comma-separated).<br><em>1 Cor 13:4 · II Tim 3:16–17 · Ge 1 · Jn. 3:16</em></div>
+      </div>
+    </div>
+
+    <!-- AI SEARCH PANEL -->
+    <div>
+      <div class="section-label">✦ Ask AI to Search</div>
+      <div class="ai-panel">
+        <div class="ai-key-row">
+          <input class="ai-key-input" id="aiApiKey" type="password" placeholder="Claude API key (sk-ant-…)" autocomplete="off">
+        </div>
+        <div class="ai-query-row">
+          <input class="ai-query-input" id="aiQuery" type="text"
+            placeholder="e.g. passages about election and grace…"
+            onkeydown="if(event.key==='Enter')runAiSearch()">
+          <button class="ai-ask-btn" id="aiAskBtn" onclick="runAiSearch()">Ask AI</button>
+        </div>
+        <div class="ai-status" id="aiStatus">Enter a question and your Claude API key to auto-fill search terms.</div>
       </div>
     </div>
 
@@ -1281,6 +1447,15 @@
           <input type="range" id="resultFontSlider" min="60" max="180" value="80" step="5"
             style="width:100%;accent-color:var(--amber);cursor:pointer;"
             oninput="setResultFontSize(this.value)">
+        </div>
+        <div class="option-row">
+          <span class="option-label">Results per page</span>
+          <div class="radio-group">
+            <button class="radio-btn" id="perPage10" onclick="setPageSize(10)">10</button>
+            <button class="radio-btn active" id="perPage25" onclick="setPageSize(25)">25</button>
+            <button class="radio-btn" id="perPage50" onclick="setPageSize(50)">50</button>
+            <button class="radio-btn" id="perPage100" onclick="setPageSize(100)">100</button>
+          </div>
         </div>
       </div>
     </div>
@@ -1452,6 +1627,9 @@
         const ext = file.name.split('.').pop().toLowerCase();
         if (ext === 'pdf') entry.text = await extractPDF(file);
         else if (ext === 'docx' || ext === 'doc') entry.text = await extractDOCX(file);
+        else if (ext === 'epub') entry.text = await extractEPUB(file);
+        else if (ext === 'rtf') entry.text = await extractRTF(file);
+        else if (ext === 'html' || ext === 'htm') entry.text = await extractHTML(file);
         else entry.text = await readText(file);
         entry.status = 'ready';
       } catch(e) {
@@ -1495,6 +1673,101 @@
     return result.value;
   }
 
+  async function extractEPUB(file) {
+    if (typeof JSZip === 'undefined') throw new Error('JSZip not loaded — check your connection');
+    const buf = await file.arrayBuffer();
+    const zip = await JSZip.loadAsync(buf);
+    // Collect HTML/XHTML content files, skip nav/toc/cover
+    const skipRe = /(nav|toc|cover|ncx)/i;
+    const keys = Object.keys(zip.files).filter(k =>
+      (k.endsWith('.html') || k.endsWith('.xhtml') || k.endsWith('.htm')) &&
+      !zip.files[k].dir && !skipRe.test(k)
+    ).sort();
+    const chapters = [];
+    for (const key of keys) {
+      const html = await zip.files[key].async('string');
+      const tmp = document.createElement('div');
+      tmp.innerHTML = html;
+      // Remove script/style noise
+      tmp.querySelectorAll('script,style').forEach(el => el.remove());
+      const txt = (tmp.innerText || tmp.textContent || '').trim();
+      if (txt) chapters.push(txt);
+    }
+    const full = chapters.join('\n\n');
+    if (!full.trim()) throw new Error('No extractable text found in EPUB');
+    return full;
+  }
+
+  async function extractRTF(file) {
+    const raw = await readText(file);
+    // Walk RTF byte-by-byte: strip control words, keep plain text and paragraph breaks
+    let out = '';
+    let i = 0;
+    const len = raw.length;
+    // Track brace depth; skip special destination groups (fonttbl, colortbl, etc.)
+    const skipGroupRe = /^\\(fonttbl|colortbl|stylesheet|info|pict|object|header|footer|footnote|filetbl|rsidtbl|listtable|listoverridetable)/;
+    const groupSkip = [];
+    let depth = 0;
+    while (i < len) {
+      const ch = raw[i];
+      if (ch === '{') {
+        // Peek ahead to detect special destination
+        const peek = raw.slice(i + 1, i + 40);
+        groupSkip.push(skipGroupRe.test(peek));
+        depth++;
+        i++;
+      } else if (ch === '}') {
+        if (groupSkip.length) groupSkip.pop();
+        depth--;
+        i++;
+      } else if (groupSkip[groupSkip.length - 1]) {
+        // Inside a skip group — discard
+        i++;
+      } else if (ch === '\\') {
+        i++;
+        if (i >= len) break;
+        const nc = raw[i];
+        if (nc === '\n' || nc === '\r') { out += '\n'; i++; }
+        else if (nc === '\\') { out += '\\'; i++; }
+        else if (nc === '{') { out += '{'; i++; }
+        else if (nc === '}') { out += '}'; i++; }
+        else if (nc === '\'') {
+          // Hex-encoded character
+          const hex = raw.slice(i + 1, i + 3);
+          try { out += String.fromCharCode(parseInt(hex, 16)); } catch(e) {}
+          i += 3;
+        } else if (nc === '~') { out += '\u00a0'; i++; } // non-breaking space
+        else if (nc === '-') { i++; } // optional hyphen
+        else {
+          // Control word
+          const m = raw.slice(i).match(/^([a-zA-Z]+)(-?\d*)[ ]?/);
+          if (m) {
+            const ctrl = m[1].toLowerCase();
+            if (ctrl === 'par' || ctrl === 'pard' || ctrl === 'sect' || ctrl === 'page') out += '\n\n';
+            else if (ctrl === 'line' || ctrl === 'tab') out += ctrl === 'tab' ? '\t' : '\n';
+            i += m[0].length;
+          } else { i++; }
+        }
+      } else {
+        out += ch;
+        i++;
+      }
+    }
+    const result = out.replace(/\n{3,}/g, '\n\n').trim();
+    if (!result) throw new Error('No text extracted from RTF file');
+    return result;
+  }
+
+  async function extractHTML(file) {
+    const raw = await readText(file);
+    const tmp = document.createElement('div');
+    tmp.innerHTML = raw;
+    tmp.querySelectorAll('script,style,noscript,head').forEach(el => el.remove());
+    const txt = (tmp.innerText || tmp.textContent || '').replace(/\n{3,}/g, '\n\n').trim();
+    if (!txt) throw new Error('No text extracted from HTML file');
+    return txt;
+  }
+
   function removeSource(id) {
     loadedSources = loadedSources.filter(s => s.id !== id);
     renderFileList();
@@ -1505,7 +1778,7 @@
     list.innerHTML = '';
     loadedSources.forEach(s => {
       const ext = s.name.split('.').pop().toLowerCase();
-      const icon = ext === 'pdf' ? '📄' : (ext === 'docx' || ext === 'doc') ? '📝' : '📃';
+      const icon = ext === 'pdf' ? '📄' : (ext === 'docx' || ext === 'doc') ? '📝' : ext === 'epub' ? '📚' : ext === 'rtf' ? '📋' : (ext === 'html' || ext === 'htm') ? '🌐' : '📃';
       const div = document.createElement('div');
       div.className = 'file-item';
       let statusHtml = '';
@@ -1517,7 +1790,9 @@
       } else {
         statusHtml = `<span class="file-status" style="color:#c04030" title="${esc(s.error||'')}">⚠ Error</span>`;
       }
-      div.innerHTML = `<span>${icon}</span><span class="file-name" title="${esc(s.name)}">${esc(s.name)}</span>${statusHtml}<button class="file-remove" onclick="removeSource(${s.id})">×</button>`;
+      const noteHtml = s.note ? `<div class="file-note-label">✎ ${esc(s.note)}</div>` : '';
+      div.innerHTML = `<span>${icon}</span><span class="file-name" title="${esc(s.name)}">${esc(s.name)}</span>${statusHtml}<button class="file-note-btn" title="Add/edit label" onclick="toggleFileNote(this, ${s.id})">✎</button><button class="file-remove" onclick="removeSource(${s.id})">×</button>`;
+      if (noteHtml) div.insertAdjacentHTML('beforeend', noteHtml);
       list.appendChild(div);
       if (s.status === 'loading') {
         const bar = document.createElement('div');
@@ -1837,7 +2112,298 @@
     else runSearch();
   }
 
-  const PAGE_SIZE = 25;
+  // ── RESULTS PER PAGE ───────────────────────────────────────
+  function setPageSize(n) {
+    PAGE_SIZE = n;
+    [10,25,50,100].forEach(v => {
+      const btn = document.getElementById('perPage' + v);
+      if (btn) btn.classList.toggle('active', v === n);
+    });
+    // Re-render if we have results
+    if (_allResults.length) { _currentPage = 1; renderResultsPage(_allResults, _allTerms, 1); }
+  }
+
+  // ── PER-FILE NOTES ─────────────────────────────────────────
+  function toggleFileNote(btn, id) {
+    const item = btn.closest('.file-item');
+    let inp = item.querySelector('.file-note-input');
+    if (inp) { inp.remove(); return; }
+    const src = loadedSources.find(s => s.id === id);
+    if (!src) return;
+    inp = document.createElement('input');
+    inp.type = 'text';
+    inp.className = 'file-note-input';
+    inp.placeholder = 'Label / note for this file…';
+    inp.value = src.note || '';
+    inp.maxLength = 80;
+    inp.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { src.note = inp.value.trim(); renderFileList(); }
+      if (e.key === 'Escape') { inp.remove(); }
+    });
+    inp.addEventListener('blur', () => { src.note = inp.value.trim(); renderFileList(); });
+    item.appendChild(inp);
+    inp.focus();
+  }
+
+  // ── BOOKMARKS / STARRING ───────────────────────────────────
+  const STARS_KEY = 'ps_starred';
+  window._starredSet = new Set();
+
+  function loadStars() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(STARS_KEY) || '[]');
+      // Stars are stored as { terms, source, text } — match against current results
+      return raw;
+    } catch(e) { return []; }
+  }
+
+  function toggleStar(btn, idx) {
+    const results = window._lastResults || [];
+    const r = results[idx];
+    if (!r) return;
+    if (!window._starredSet) window._starredSet = new Set();
+
+    if (window._starredSet.has(idx)) {
+      window._starredSet.delete(idx);
+      btn.textContent = '☆';
+      btn.dataset.starred = 'false';
+      btn.style.color = 'var(--text-dim)';
+    } else {
+      window._starredSet.add(idx);
+      btn.textContent = '★';
+      btn.dataset.starred = 'true';
+      btn.style.color = '#e0b800';
+    }
+    persistStars();
+  }
+
+  function persistStars() {
+    const results = window._lastResults || [];
+    const terms = window._lastTerms || [];
+    const starred = [...window._starredSet].map(idx => {
+      const r = results[idx];
+      return r ? { source: r.source, text: r.text, terms } : null;
+    }).filter(Boolean);
+    try { localStorage.setItem(STARS_KEY, JSON.stringify(starred)); } catch(e) {}
+  }
+
+  // ── EXPORT RESULTS ─────────────────────────────────────────
+  function exportResults() {
+    const results = window._lastResults || [];
+    if (!results.length) { alert('No results to export.'); return; }
+    const terms = (window._lastTerms || []).join(', ');
+    const lines = [];
+    lines.push('PROXIMITY SEARCH — RESULTS EXPORT');
+    lines.push('Generated: ' + new Date().toLocaleString());
+    lines.push('Terms: ' + terms);
+    lines.push('Total passages: ' + results.length);
+    lines.push('');
+    lines.push('═'.repeat(60));
+    results.forEach((r, i) => {
+      lines.push('');
+      lines.push(`[${i + 1}] Source: ${r.source}`);
+      lines.push('─'.repeat(40));
+      lines.push(r.text);
+    });
+    const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'proximity-search-results.txt';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // ── SEARCH HISTORY ─────────────────────────────────────────
+  const HISTORY_KEY = 'ps_search_history';
+  const HISTORY_MAX = 20;
+
+  function saveHistory() {
+    const activeTerms = terms.map(t => t.val.trim()).filter(Boolean);
+    if (!activeTerms.length) return;
+    const entry = {
+      terms: activeTerms,
+      window: parseInt(document.getElementById('windowSlider').value),
+      mode: matchMode,
+      display: displayMode,
+      caseSensitive,
+      ts: Date.now()
+    };
+    try {
+      let hist = loadHistoryRaw();
+      // Deduplicate by exact term set
+      const key = activeTerms.slice().sort().join('|');
+      hist = hist.filter(h => h.terms.slice().sort().join('|') !== key);
+      hist.unshift(entry);
+      if (hist.length > HISTORY_MAX) hist = hist.slice(0, HISTORY_MAX);
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(hist));
+    } catch(e) {}
+  }
+
+  function loadHistoryRaw() {
+    try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch(e) { return []; }
+  }
+
+  function toggleHistoryDropdown() {
+    const dd = document.getElementById('historyDropdown');
+    const isOpen = dd.classList.contains('open');
+    if (isOpen) { dd.classList.remove('open'); return; }
+    renderHistoryDropdown();
+    dd.classList.add('open');
+  }
+
+  function renderHistoryDropdown() {
+    const dd = document.getElementById('historyDropdown');
+    const hist = loadHistoryRaw();
+    if (!hist.length) {
+      dd.innerHTML = '<div class="history-empty">No search history yet.</div>';
+      return;
+    }
+    dd.innerHTML = hist.map((h, i) => {
+      const ago = formatTimeAgo(h.ts);
+      const meta = `${h.mode === 'all' ? 'All terms' : 'Any term'} · ${h.display || 'paragraph'} · ${h.window}w`;
+      return `<div class="history-item" onclick="restoreHistory(${i})">
+        <div class="history-terms">${h.terms.map(t => esc(t)).join(' + ')}</div>
+        <div class="history-meta">${meta} · ${ago}</div>
+      </div>`;
+    }).join('');
+  }
+
+  function restoreHistory(idx) {
+    const hist = loadHistoryRaw();
+    const h = hist[idx];
+    if (!h) return;
+    terms = h.terms.map(v => ({ id: Date.now() + Math.random(), val: v, stem: null }));
+    renderTerms();
+    if (h.window) setWindowVal(h.window);
+    if (h.mode) setMatch(h.mode);
+    if (h.display) setMode(h.display);
+    document.getElementById('historyDropdown').classList.remove('open');
+    setSearchMode('proximity');
+  }
+
+  function formatTimeAgo(ts) {
+    const s = Math.floor((Date.now() - ts) / 1000);
+    if (s < 60) return 'just now';
+    if (s < 3600) return Math.floor(s/60) + 'm ago';
+    if (s < 86400) return Math.floor(s/3600) + 'h ago';
+    return Math.floor(s/86400) + 'd ago';
+  }
+
+  // Close history dropdown when clicking outside
+  document.addEventListener('click', e => {
+    const wrap = document.querySelector('.history-wrap');
+    if (wrap && !wrap.contains(e.target)) {
+      document.getElementById('historyDropdown').classList.remove('open');
+    }
+  });
+
+  // ── AI-ASSISTED SEARCH ─────────────────────────────────────
+  async function runAiSearch() {
+    const keyInput = document.getElementById('aiApiKey');
+    const queryInput = document.getElementById('aiQuery');
+    const statusEl = document.getElementById('aiStatus');
+    const btn = document.getElementById('aiAskBtn');
+
+    const apiKey = keyInput.value.trim();
+    const query = queryInput.value.trim();
+
+    if (!apiKey) { setAiStatus('err', 'Please enter your Claude API key.'); keyInput.focus(); return; }
+    if (!query)  { setAiStatus('err', 'Please enter a search question.'); queryInput.focus(); return; }
+
+    // Persist key in localStorage for convenience
+    try { localStorage.setItem('ps_ai_key', apiKey); } catch(e) {}
+
+    btn.disabled = true;
+    setAiStatus('', 'Asking AI…');
+
+    try {
+      const systemPrompt = `You are a helper for a theological text proximity search tool. The user describes what they want to find, and you respond with ONLY a valid JSON object — no explanation, no markdown fences. The JSON must have these fields:
+- "terms": array of 2–5 lowercase theological search terms
+- "window": suggested word proximity window (integer 25–300)
+- "mode": "all" if all terms must co-occur, "any" if any term suffices
+- "display": "paragraph" or "window"
+Example: {"terms":["grace","election"],"window":100,"mode":"all","display":"paragraph"}`;
+
+      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+          'content-type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 256,
+          system: systemPrompt,
+          messages: [{ role: 'user', content: query }]
+        })
+      });
+
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        throw new Error(err.error?.message || `HTTP ${resp.status}`);
+      }
+
+      const data = await resp.json();
+      const raw = data.content?.[0]?.text || '';
+      // Extract JSON even if wrapped in markdown fences
+      const jsonStr = raw.replace(/```json?/gi,'').replace(/```/g,'').trim();
+      const parsed = JSON.parse(jsonStr);
+
+      if (!Array.isArray(parsed.terms) || !parsed.terms.length) throw new Error('AI returned no terms');
+
+      // Apply suggested terms
+      terms = [];
+      parsed.terms.forEach(t => terms.push({ id: Date.now() + Math.random(), val: String(t).trim(), stem: null }));
+      renderTerms();
+
+      // Apply window
+      if (parsed.window) {
+        const w = Math.max(5, Math.min(9999, parseInt(parsed.window)));
+        setWindowVal(w);
+      }
+
+      // Apply match mode
+      if (parsed.mode === 'any') setMatch('any');
+      else setMatch('all');
+
+      // Apply display mode
+      if (parsed.display === 'window') setMode('window');
+      else setMode('paragraph');
+
+      // Switch to proximity mode
+      setSearchMode('proximity');
+
+      setAiStatus('ok', `✓ Set ${parsed.terms.length} terms: ${parsed.terms.join(', ')}`);
+      saveHistory(); // auto-save this suggested config
+    } catch(e) {
+      setAiStatus('err', 'Error: ' + e.message);
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  function setAiStatus(type, msg) {
+    const el = document.getElementById('aiStatus');
+    if (!el) return;
+    el.textContent = msg;
+    el.className = 'ai-status' + (type ? ' ' + type : '');
+  }
+
+  // Restore saved API key on load
+  (function() {
+    try {
+      const saved = localStorage.getItem('ps_ai_key');
+      if (saved) {
+        const el = document.getElementById('aiApiKey');
+        if (el) el.value = saved;
+      }
+    } catch(e) {}
+  })();
+
+  let PAGE_SIZE = 25;
   let _allResults = [];
   let _allTerms = [];
   let _currentPage = 1;
@@ -1850,15 +2416,20 @@
     const allSources = [];
     const pasteVal = document.getElementById('pasteArea').value.trim();
     if (pasteVal && activeSourceIds.has('__paste__')) allSources.push({ name: 'Pasted Text', text: pasteVal });
-    loadedSources.filter(s => s.status === 'ready' && activeSourceIds.has(s.id)).forEach(s => allSources.push(s));
+    loadedSources.filter(s => s.status === 'ready' && activeSourceIds.has(s.id)).forEach(s => allSources.push({ name: s.note ? `${s.note} (${s.name})` : s.name, text: s.text }));
     if (!allSources.length) { alert('Please paste text or load at least one file, and make sure at least one source is active.'); return; }
     const windowSize = parseInt(document.getElementById('windowSlider').value);
+    // Build source text map for context expansion
+    window._sourcesTextMap = {};
+    allSources.forEach(s => { window._sourcesTextMap[s.name] = s.text; });
     const results = [];
     allSources.forEach(src => {
       findPassages(src.text, activeTerms, windowSize).forEach(p => results.push({ source: src.name, ...p }));
     });
     renderResults(results, activeTerms);
     window._lastResults = results;
+    window._lastTerms = activeTerms;
+    saveHistory();
   }
 
   function goToPage(page) {
@@ -1941,15 +2512,17 @@
       pStart = pStart === -1 ? 0 : pStart + 2;
       let pEnd = text.indexOf('\n\n', charEnd);
       pEnd = pEnd === -1 ? text.length : pEnd;
-      return { text: text.slice(pStart, pEnd).trim() };
+      return { text: text.slice(pStart, pEnd).trim(), _srcCharStart: pStart, _srcCharEnd: pEnd };
     } else {
       const pad = Math.max(20, Math.floor(windowSize / 3));
       const wStart = Math.max(0, minIdx - pad);
       const wEnd = Math.min(realWords.length - 1, maxIdx + pad);
       let snippet = text.slice(realWords[wStart].pos, realWords[wEnd].pos + realWords[wEnd].token.length).trim();
+      const cStart = realWords[wStart].pos;
+      const cEnd = realWords[wEnd].pos + realWords[wEnd].token.length;
       if (wStart > 0) snippet = '…' + snippet;
       if (wEnd < realWords.length - 1) snippet += '…';
-      return { text: snippet };
+      return { text: snippet, _srcCharStart: cStart, _srcCharEnd: cEnd };
     }
   }
 
@@ -1973,6 +2546,7 @@
     _allResults = results;
     _allTerms = activeTerms;
     _currentPage = 1;
+    window._starredSet = new Set(); // reset stars on new search
     renderResultsPage(results, activeTerms, 1);
   }
 
@@ -2033,7 +2607,7 @@
     const start = (page - 1) * PAGE_SIZE;
     const pageResults = results.slice(start, start + PAGE_SIZE);
 
-    let html = `<div class="results-header"><div class="results-title">Results</div><div class="results-count">${results.length} passage${results.length!==1?'s':''}</div></div>
+    let html = `<div class="results-header"><div class="results-title">Results</div><div class="results-count">${results.length} passage${results.length!==1?'s':''}</div><button class="copy-btn" style="margin-left:auto" onclick="exportResults()" title="Export all results as text file">&#x21E9; Export</button></div>
     <div class="freq-bar">${freqHtml}</div>
     ${srcTabsHtml}
     <div class="legend">${legend}</div>`;
@@ -2044,7 +2618,8 @@
         const c = COLORS[i % COLORS.length];
         return `<span class="term-badge" style="background:${c.bg}22;color:${c.bg};border:1px solid ${c.bg}44">${esc(t)}</span>`;
       }).join('');
-      html += `<div class="result-card" data-source="${esc(r.source)}">
+      const starred = (window._starredSet && window._starredSet.has(globalIdx));
+      html += `<div class="result-card" data-source="${esc(r.source)}" data-idx="${globalIdx}">
         <div class="card-header">
           <div class="card-header-left">
             <span class="card-num">#${globalIdx+1}</span>
@@ -2052,7 +2627,9 @@
           </div>
           <div class="card-header-right">
             <div class="term-badges">${badges}</div>
-            <button class="expand-btn" title="Expand/Collapse" onclick="toggleCard(this)">&#x25BE;</button>
+            <button class="ctx-btn" title="Show more surrounding context" onclick="expandContext(this, ${globalIdx})">⊕ More</button>
+            <button class="star-btn" title="Bookmark this passage" onclick="toggleStar(this, ${globalIdx})" style="background:transparent;border:none;font-size:1rem;cursor:pointer;padding:0 3px;color:${starred?'#e0b800':'var(--text-dim)'};transition:color 0.15s;" data-starred="${starred}">${starred?'★':'☆'}</button>
+            <button class="expand-btn" title="Collapse/Expand card" onclick="toggleCard(this)">&#x25BE;</button>
             <button class="copy-btn" title="Copy passage" onclick="copyPassage(this, ${globalIdx})">&#x2398; Copy</button>
           </div>
         </div>
@@ -2165,7 +2742,45 @@
     const collapsed = body.style.display === 'none';
     body.style.display = collapsed ? '' : 'none';
     btn.innerHTML = collapsed ? '&#x25BE;' : '&#x25B8;';
-    btn.title = collapsed ? 'Collapse' : 'Expand';
+    btn.title = collapsed ? 'Collapse card' : 'Expand card';
+  }
+
+  function expandContext(btn, idx) {
+    const card = btn.closest('.result-card');
+    const body = card.querySelector('.card-body');
+    const result = (window._lastResults || [])[idx];
+    if (!result) return;
+
+    const isExpanded = card.dataset.ctxExpanded === 'true';
+    if (isExpanded) {
+      // Collapse back to original snippet
+      body.innerHTML = highlight(result.text, window._lastTerms || _allTerms);
+      card.dataset.ctxExpanded = 'false';
+      btn.textContent = '⊕ More';
+      btn.classList.remove('expanded');
+      btn.title = 'Show more surrounding context';
+      return;
+    }
+
+    const srcText = (window._sourcesTextMap || {})[result.source];
+    if (!srcText || result._srcCharStart === undefined) {
+      // No position data — just show the full source snippet is all we have
+      btn.textContent = '(no extra context)';
+      return;
+    }
+
+    const EXPAND_CHARS = 800;
+    const newStart = Math.max(0, result._srcCharStart - EXPAND_CHARS);
+    const newEnd   = Math.min(srcText.length, result._srcCharEnd + EXPAND_CHARS);
+    let expanded = srcText.slice(newStart, newEnd).trim();
+    if (newStart > 0)             expanded = '…' + expanded;
+    if (newEnd < srcText.length)  expanded += '…';
+
+    body.innerHTML = highlight(expanded, window._lastTerms || _allTerms);
+    card.dataset.ctxExpanded = 'true';
+    btn.textContent = '⊖ Less';
+    btn.classList.add('expanded');
+    btn.title = 'Collapse to original view';
   }
 
   function shareApp() {
